@@ -31,9 +31,9 @@ class MiddleLayer:
     def forward(self,x):
         self.x = x
         self.z = x@self.w+self.b
-        self.s = 1/(1+np.exp(self.z))
+        self.s = 1/(1+np.exp(-self.z))
     def backward(self,grad):
-        delta = grad * self.s * (1-self.s)
+        delta =   grad *self.s * (1-self.s)
         self.dw = self.x.T @ delta
         self.db = np.sum(delta,axis=0)
         self.dx = delta @ self.w.T 
@@ -52,7 +52,7 @@ class OutputLayer:
         self.softmax = np.exp(self.z)/np.sum(np.exp(self.z),axis=1,keepdims=True)
         self.loss = (1/len(output_data))*-np.sum((1-output_data)*np.log(1-self.softmax+l)+output_data*np.log(self.softmax+l))
     def backward(self,grad):
-        self.dact = grad-self.softmax
+        self.dact = grad-output_data
         self.dw = self.x.T @ self.dact
         self.db = np.sum(self.dact,axis=0)
         self.dx = self.dact@self.w.T
@@ -64,27 +64,25 @@ class OutputLayer:
 hiddenLayer = MiddleLayer(2,10)
 ouputlayer = OutputLayer(10,2)
 sindata = np.sin(np.pi*x_train)
-epoch = 101
-eta = 0.0000001
+epoch = 10001
+eta = 0.001
 ndata = len(output_data)
 for i in range(epoch):
     indexRandom = np.arange(ndata)
     np.random.shuffle(indexRandom)
 
     total_error = 0
-    x_1 = []
-    x_2 = []
-    y_1 = []
-    y_2 = []
     hiddenLayer.forward(input_data)
     ouputlayer.forward(hiddenLayer.s)
-    ouputlayer.backward(output_data)
+    ouputlayer.backward(ouputlayer.softmax)
     hiddenLayer.backward(ouputlayer.dx)
     ouputlayer.update(eta)
     hiddenLayer.update(eta)
     y = ouputlayer.softmax.reshape(-1)
     total_error+=ouputlayer.loss
-    if i%10==0:
+    # if(ouputlayer.loss<1):
+    #     break
+    if i%100==0:
         print(ouputlayer.loss)
     # for j in indexRandom:
     #     x = input_data[j]
@@ -113,6 +111,20 @@ for i in range(epoch):
 
 
 
-hiddenLayer.forward(input_data)
-ouputlayer.forward(hiddenLayer.s)
-
+y_data = np.sin(np.pi*x_train)
+predict = ouputlayer.softmax
+x_1 = []
+x_2 = []
+y_1 = []
+y_2 = []
+for idx,i in enumerate(predict):
+    if i[0]<i[1]:
+        x_1.append(input_data[idx,0])
+        y_1.append(input_data[idx,1])
+    else:
+        x_2.append(input_data[idx,0])
+        y_2.append(input_data[idx,1])
+plt.plot(x_train,y_data)
+plt.scatter(x_1,y_1,marker="o")
+plt.scatter(x_2,y_2,marker="x")
+plt.show()
