@@ -127,4 +127,4 @@ for idx,i in enumerate(predict):
 plt.plot(x_train,y_data)
 plt.scatter(x_1,y_1,marker="o")
 plt.scatter(x_2,y_2,marker="x")
-plt.show()
+plt.show() 
